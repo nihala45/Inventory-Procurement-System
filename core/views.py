@@ -113,15 +113,88 @@ def department_details(request, dep_id):
 
 
 def update_status(request, request_id):
-    
     procurement_request = get_object_or_404(ProcurementRequest, id=request_id)
 
     if request.method == 'POST':
-        new_status = request.POST.get('status')
-        if new_status:
-            procurement_request.status = new_status
-            procurement_request.save()
-            return redirect('department_details', department_id=ProcurementRequest.department.id)
+        if procurement_request.department.budget > procurement_request.total_cost:
+            new_status = request.POST.get('status')
+            if new_status:
+                procurement_request.status = new_status
+                procurement_request.save()
+                return JsonResponse({'success': True, 'message': 'Status updated successfully'})
+    
+    return JsonResponse({'success': False, 'message': 'Failed to update status'})
 
+
+
+
+def finance_dashboard(request):
+    # include all requests in any of these statuses
+    procurement_requests = ProcurementRequest.objects.filter(
+        status__in=[
+            'Pending Finance Approval',
+            'Approved by Finance',
+            'Rejected by Finance'
+        ]
+    )
+    print(procurement_requests, 'hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii')
+    return render(request, 'finance_dashboard.html', {
+        'requests': procurement_requests
+    })
+
+
+
+def approve_request(request, id):
+    procurement = ProcurementRequest.objects.get(id=id)
+    procurement.status = 'Approved by Finance'
+    procurement.save()
+    return redirect('finance_dashboard')
+
+def reject_request(request):
+    if request.method == 'POST':
+        req_id = request.POST.get('request_id')
+        reason = request.POST.get('rejection_reason')
+        req = get_object_or_404(ProcurementRequest, id=req_id)
+        req.status = 'Rejected by Finance'
+        # Optionally save the reason (if you have a rejection_reason field)
+        # req.rejection_reason = reason
+        req.save()
+    return redirect('finance_dashboard')
+
+
+# def approve_requests(request, request_id):
+#     procurement_request = get_object_or_404(ProcurementRequest, id=request_id)
     
+#     # Ensure that the request is in "Pending Finance Approval" status
+#     if procurement_request.status != 'Pending Finance Approval':
+#         return JsonResponse({'success': False, 'message': 'This request is not pending finance approval.'})
     
+#     # Check if the procurement request total cost is within the department's budget
+#     if procurement_request.total_cost <= procurement_request.department.budget:
+#         # Approve the request and update its status
+#         procurement_request.status = 'Approved by Finance'
+#         procurement_request.save()
+        
+  
+#         vendor = Vendor.objects.first()  
+#         po = PurchaseOrder.objects.create(
+#             procurement_request=procurement_request,
+#             vendor=vendor,
+#             total_amount=procurement_request.total_cost
+#         )
+        
+       
+#         return JsonResponse({'success': True, 'message': 'Request approved and PO generated successfully.'})
+    
+#     else:
+      
+#         procurement_request.status = 'Rejected by Finance'
+#         procurement_request.save()
+
+        
+#         finance_approval, created = FinanceApproval.objects.get_or_create(procurement_request=procurement_request)
+#         finance_approval.status = 'Rejected'
+#         finance_approval.rejection_reason = 'Exceeded department budget.'
+#         finance_approval.save()
+
+#         return JsonResponse({'success': False, 'message': 'Request exceeds the department’s budget. It has been rejected.'})

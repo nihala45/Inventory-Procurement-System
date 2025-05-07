@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Finance Dashboard - Pending Approval Requests</h1>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Requester</th>
+                <th>Category</th>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Total Cost</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ request.requester }}</td>
+                <td>{{ request.category }}</td>
+                <td>{{ request.get_equipment_name }}</td>
+                <td>{{ request.quantity }}</td>
+                <td>${{ request.total_cost|floatformat:2 }}</td>
+                <td>{{ request.description }}</td>
+                <td>{{ request.status }}</td>
+                <td>
+                    {% if request.status == 'Approved by Finance' %}
+                        <span class="badge badge-success">Approved</span>
+                    {% elif request.status == 'Rejected by Finance' %}
+                        <span class="badge badge-danger">Rejected</span>
+                    {% else %}
+                        <a href="{% url 'approve_request' request.id %}" class="btn btn-success btn-sm">Approve</a>
+                        <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rejectModal" data-request-id="{{ request.id }}">Reject</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form method="post" id="rejectForm">
+                {% csrf_token %}
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rejectModalLabel">Reject Procurement Request</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="request_id" name="request_id">
+                        <div class="form-group">
+                            <label for="rejection_reason">Rejection Reason:</label>
+                            <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="4" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    $('#rejectModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var requestId = button.data('request-id');
+        var modal = $(this);
+
+        modal.find('#request_id').val(requestId);
+
+        // Dynamically update form action
+        var formAction = '/reject_request/' + requestId + '/';
+        modal.find('form').attr('action', formAction);
+    });
+</script>
+{% endblock %}
+
+</body>
+</html>
