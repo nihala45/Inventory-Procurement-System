@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Department Overview</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 40px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      padding: 25px 30px;
+      margin-bottom: 20px;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    .card h2 {
+      font-size: 22px;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .budget {
+      color: #16a085;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .button {
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .button:hover {
+      background-color: #2980b9;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 20px;
+      }
+
+      .card h2 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Department Budget Overview</h1>
+
+  <div class="container">
+    {% for department in departments %}
+      <div class="card">
+        <h2>{{ department.name }}</h2>
+        <p class="budget">Budget: ₹{{ department.budget }}</p>
+        <a href="{% url 'department_details' dep_id=department.id %}">
+          <button class="button">View Department Details</button>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+
+</body>
+</html>

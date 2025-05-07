@@ -6,6 +6,7 @@ class Department(models.Model):
     budget = models.DecimalField(max_digits=12, decimal_places=2)
     
     
+
     def __str__(self):
         return self.name
 
@@ -54,22 +55,35 @@ STATUS_CHOICES = [
 ]
 
 class ProcurementRequest(models.Model):
-    requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requests')
+    requester = models.CharField(max_length=100)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    equipment = models.ForeignKey(ITEquipmentDetails, on_delete=models.CASCADE, null=True, blank=True)
+    
+    it_equipment = models.ForeignKey(ITEquipmentDetails, on_delete=models.SET_NULL, null=True, blank=True)
+    office_supply = models.ForeignKey(OfficeSupplyDetails, on_delete=models.SET_NULL, null=True, blank=True)
+    
     quantity = models.IntegerField()
     total_cost = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending Department Approval')
     submitted_at = models.DateTimeField(auto_now_add=True)
-    
 
     def save(self, *args, **kwargs):
-        self.total_cost = self.quantity * self.cost_per_item
+        if self.category == 'IT Equipment' and self.it_equipment:
+            self.total_cost = int(self.quantity) * self.it_equipment.cost_per_item
+        elif self.category == 'Office Supplies' and self.office_supply:
+            self.total_cost = int(self.quantity) * self.office_supply.cost_per_item
+        else:
+            self.total_cost = 0
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.item_name} - {self.status}"
+        # requester is already a string, so just use it directly:
+        return f"{self.requester} - {self.category} - {self.status}"
 
-    
+    def get_equipment_name(self):
+        if self.category == 'IT Equipment' and self.it_equipment:
+            return self.it_equipment.name
+        elif self.category == 'Office Supplies' and self.office_supply:
+            return self.office_supply.name
+        return "No Equipment"

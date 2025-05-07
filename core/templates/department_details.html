@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ department.name }} - Department Details</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            padding: 25px 30px;
+            margin-bottom: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .card h2 {
+            font-size: 22px;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .budget {
+            color: #16a085;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .procurement-requests {
+            margin-top: 30px;
+        }
+
+        .request-card {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 10px;
+        }
+
+        .request-card h3 {
+            font-size: 18px;
+            color: #2c3e50;
+        }
+
+        .request-card p {
+            font-size: 16px;
+            color: #7f8c8d;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .status.approved {
+            color: #27ae60;
+        }
+
+        .status.rejected {
+            color: #e74c3c;
+        }
+
+        .status.pending {
+            color: #f39c12;
+        }
+
+        .status-select {
+            margin-top: 10px;
+            padding: 5px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .form-container {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Department: {{ department.name }} - Details</h1>
+
+    <div class="container">
+        <div class="card">
+            <h2>{{ department.name }}</h2>
+            <p class="budget">Budget: ₹{{ department.budget }}</p>
+        </div>
+
+        <div class="procurement-requests">
+            <h2>Procurement Requests</h2>
+
+            {% if procurement_requests %}
+                {% for request in procurement_requests %}
+                    <div class="request-card">
+                        <h3>Name: {{ request.requester }}</h3>
+                        <h3>Request ID: {{ request.id }}</h3>
+                        <p><strong>Amount:</strong> ₹{{ request.total_cost }}</p>
+                        <p><strong>Status:</strong> 
+                            {% if request.status == 'Pending Department Approval' %}
+                                <span class="status pending">{{ request.status }}</span>
+                            {% elif request.status == 'Rejected by Department' %}
+                                <span class="status rejected">{{ request.status }}</span>
+                            {% elif request.status == 'Pending Finance Approval' %}
+                                <span class="status pending">{{ request.status }}</span>
+                            {% else %}
+                                <span class="status approved">{{ request.status }}</span>
+                            {% endif %}
+                        </p>
+                        
+                        <form method="POST" action="{% url 'update_status' request.id %}">
+                            {% csrf_token %}
+                            <label for="status">Change Status:</label>
+                            <select name="status" id="status" class="status-select">
+                                <option value="Pending Department Approval" {% if request.status == 'Pending Department Approval' %}selected{% endif %}>Pending Department Approval</option>
+                                <option value="Rejected by Department" {% if request.status == 'Rejected by Department' %}selected{% endif %}>Rejected by Department</option>
+                                <option value="Pending Finance Approval" {% if request.status == 'Pending Finance Approval' %}selected{% endif %}>Pending Finance Approval</option>
+                            </select>
+                            <button type="submit">Update Status</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No procurement requests found for this department.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

@@ -8,3 +8,4 @@ admin.site.register(FinanceUser)
 admin.site.register(ITEquipmentDetails)
 admin.site.register(OfficeSupplyDetails)
 
+
