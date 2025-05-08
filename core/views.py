@@ -174,13 +174,13 @@ from xhtml2pdf import pisa
 def approve_request(request, request_id):
     procurement_request = get_object_or_404(ProcurementRequest, id=request_id)
 
-    # If the form is submitted
+    
     if request.method == 'POST':
         vendor_id = request.POST.get('vendor_id')
         vendor = get_object_or_404(Vendor, id=vendor_id)
 
         procurement_request.status = 'Approved by Finance'
-        # procurement_request.vendor = vendor  
+         
         procurement_request.save()
 
         po_number = f"PO-{procurement_request.id}-{vendor.id}"
