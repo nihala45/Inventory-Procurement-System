@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import ITEquipmentDetails, OfficeSupplyDetails, Department, ProcurementRequest, PurchaseOrder
+from .models import ITEquipmentDetails, OfficeSupplyDetails, Department, ProcurementRequest, PurchaseOrder, Vendor
 from django.http import JsonResponse
 from django.http import Http404
 
@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from .models import PurchaseOrder
+from django.utils import timezone
 
 
 def home(request):
@@ -134,6 +135,7 @@ def update_status(request, request_id):
 
 
 def finance_dashboard(request):
+    vendors = Vendor.objects.all()
     
     procurement_requests = ProcurementRequest.objects.filter(
         status__in=[
@@ -144,7 +146,8 @@ def finance_dashboard(request):
     )
     print(procurement_requests, 'hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii')
     return render(request, 'finance_dashboard.html', {
-        'requests': procurement_requests
+        'requests': procurement_requests,
+        'vendors': vendors
     })
 
 
@@ -161,37 +164,69 @@ def finance_dashboard(request):
 
 
 
-def approve_request(request, request_id):  
-    print('sssssssssssssssssssssssssss')
+
+
+from .models import ProcurementRequest, Vendor, PurchaseOrder
+from django.utils import timezone
+from django.http import HttpResponse
+from xhtml2pdf import pisa
+
+def approve_request(request, request_id):
     procurement_request = get_object_or_404(ProcurementRequest, id=request_id)
 
-    
-    print('heeeeeeeeeeeeeeeeeeeeeeeeeellllllllllllll')
-    procurement_request.status = 'Approved by Finance'
-    procurement_request.save()
+    # If the form is submitted
+    if request.method == 'POST':
+        vendor_id = request.POST.get('vendor_id')
+        vendor = get_object_or_404(Vendor, id=vendor_id)
+
+        procurement_request.status = 'Approved by Finance'
+        # procurement_request.vendor = vendor  
+        procurement_request.save()
+
+        po_number = f"PO-{procurement_request.id}-{vendor.id}"
+        total_cost = procurement_request.total_cost
 
         
+        purchase_order = PurchaseOrder.objects.create(
+            request=procurement_request,
+            vendor=vendor,
+            po_number=po_number,
+            total_cost=total_cost,
+            issued_at=timezone.now(),
+            fulfilled_at=None
+        )
+
+        
+        context = {
+            'request': procurement_request,
+            'purchase_order': purchase_order,
+            'vendor': vendor,
+            'total_cost': total_cost,
+        }
+
+        
+        html = render_to_string('pdf_template.html', context)
+
+       
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="PO_{purchase_order.po_number}.pdf"'
+
+        
+        pisa_status = pisa.CreatePDF(html, dest=response)
+
+        if pisa_status.err:
+            return HttpResponse('Error generating PDF', status=500)
+
+        return response
+
+    
+    vendors = Vendor.objects.all()
     context = {
         'request': procurement_request,
-        'total_cost': procurement_request.total_cost,
+        'vendors': vendors,
     }
-    html = render_to_string('pdf_template.html', context)
+    return render(request, 'approve_request.html', context)
 
-        
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="PO_{procurement_request.id}.pdf"'
-
-        
-    pisa_status = pisa.CreatePDF(html, dest=response)
-
-        
-    if pisa_status.err:
-        return HttpResponse('Error generating PDF', status=500)
-
-    return response  
-
-    
-    
 
 def reject_request(request):
     if request.method == 'POST':
@@ -203,3 +238,33 @@ def reject_request(request):
         req.save()
     return redirect('finance_dashboard')
 
+
+
+def vendor_view(request):
+    vendor = Vendor.objects.all()
+    context = {
+        'vendor': vendor
+    }
+    return render(request, 'vendor_view.html', context)
+
+def customer_details(request, v_id):
+    requester = ProcurementRequest.objects.filter(vendor_id=v_id)
+    
+    context = {
+        'requesters': requester
+    }
+    
+    return render(request, 'customer_details.html', context)
+
+
+def update_request_status(request, r_id):
+    if request.method == 'POST':
+        purchase = get_object_or_404(ProcurementRequest, id=r_id)
+        new_status = request.POST.get('status')
+
+        if new_status in ['Fulfilled', 'Rejected']:
+            purchase.status = new_status
+            purchase.save()
+
+    return redirect('finance_dashboard') 
+    

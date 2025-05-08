@@ -31,6 +31,8 @@
 <body>
 
 <div class="header">
+    <td>{{ request.vendor.name}}</td>
+
     <h1>Purchase Order (PO)</h1>
     <p>PO Number: {{ request.id }}</p>
     <p>Requester: {{ request.requester }}</p>
@@ -48,7 +50,7 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ request.item_name }}</td>
+                <td>{{ request.get_equipment_name }}</td>
                 <td>{{ request.category }}</td>
                 <td>{{ request.quantity }}</td>
                 <td>${{ request.total_cost|floatformat:2 }}</td>

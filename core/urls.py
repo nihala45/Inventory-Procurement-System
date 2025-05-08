@@ -14,4 +14,8 @@ urlpatterns = [
 
 
     path('reject_request/<int:request_id>/', views.reject_request, name='reject_request'),
+    path('vendor_view/', views.vendor_view, name='vendor_view'),
+    path('vendor/<int:v_id>/customers/', views.customer_details, name='customer_details'),
+    path('update_request_status/<int:r_id>/', views.update_request_status, name='update_request_status'),
+    
 ]

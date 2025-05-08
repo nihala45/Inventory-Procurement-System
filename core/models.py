@@ -28,25 +28,7 @@ class FinanceUser(models.Model):
     def __str__(self):
         return f"{self.user.username} (Finance)"
     
-# class PurchaseOrder(models.Model):
-#     procurement_request = models.OneToOneField(ProcurementRequest, on_delete=models.CASCADE)
-#     po_number = models.CharField(max_length=100, unique=True)
-#     generated_date = models.DateField(default=timezone.now)
-#     vendor = models.ForeignKey('Vendor', on_delete=models.CASCADE)
-#     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-#     pdf_file = models.FileField(upload_to='purchase_orders/', null=True, blank=True)
-#     approval_date = models.DateTimeField(auto_now_add=True)
-    
-#     def __str__(self):
-#         return f"PO {self.po_number} - Vendor: {self.vendor.name}"
 
-#     def save(self, *args, **kwargs):
-        
-#         if not self.po_number:
-#             last_po = PurchaseOrder.objects.order_by('-id').first()
-#             next_po_number = f"PO-{timezone.now().year}-{(last_po.id + 1 if last_po else 1):03d}"
-#             self.po_number = next_po_number
-#         super().save(*args, **kwargs)
     
 class ITEquipmentDetails(models.Model):
     name = models.CharField(max_length=100)
@@ -91,6 +73,7 @@ class ProcurementRequest(models.Model):
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending Department Approval')
     submitted_at = models.DateTimeField(auto_now_add=True)
 
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     def save(self, *args, **kwargs):
         if self.category == 'IT Equipment' and self.it_equipment:
             self.total_cost = int(self.quantity) * self.it_equipment.cost_per_item
@@ -116,10 +99,11 @@ class PurchaseOrder(models.Model):
     request = models.ForeignKey(ProcurementRequest, on_delete=models.CASCADE)
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     po_number = models.CharField(max_length=50)
-    total_cost = models.DecimalField(max_digits=12, decimal_places=2)
-    status = models.CharField(max_length=50, default="PO Generated")
+    total_cost = models.DecimalField(max_digits=12, decimal_places=2) 
     issued_at = models.DateTimeField(auto_now_add=True)
     fulfilled_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"PO Number: {self.po_number}"
+    
+

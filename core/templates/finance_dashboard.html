@@ -1,13 +1,12 @@
+<!-- Bootstrap and headers -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finance Dashboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-
 {% block content %}
 <div class="container mt-4">
     <h1 class="text-center mb-4">Finance Dashboard - Pending Approval Requests</h1>
@@ -43,7 +42,7 @@
                     {% elif request.status == 'Rejected by Finance' %}
                         <span class="badge badge-danger">Rejected</span>
                     {% else %}
-                        <a href="{% url 'approve_request' request.id %}" class="btn btn-success btn-sm">Approve</a>
+                        <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#approveModal" data-request-id="{{ request.id }}">Approve</button>
                         <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rejectModal" data-request-id="{{ request.id }}">Reject</button>
                     {% endif %}
                 </td>
@@ -53,22 +52,20 @@
     </table>
 
     <!-- Reject Modal -->
-    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <form method="post" id="rejectForm">
                 {% csrf_token %}
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="rejectModalLabel">Reject Procurement Request</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <h5 class="modal-title">Reject Request</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="request_id" name="request_id">
                         <div class="form-group">
-                            <label for="rejection_reason">Rejection Reason:</label>
-                            <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="4" required></textarea>
+                            <label>Reason</label>
+                            <textarea name="rejection_reason" class="form-control" rows="4" required></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -78,27 +75,54 @@
             </form>
         </div>
     </div>
+
+    <!-- Approve Modal -->
+    <div class="modal fade" id="approveModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <form method="post" id="approveForm">
+                {% csrf_token %}
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Approve Request & Assign Vendor</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="approve_request_id" name="request_id">
+                        <div class="form-group">
+                            <label>Select Vendor</label>
+                            <select name="vendor_id" class="form-control" required>
+                                {% for vendor in vendors %}
+                                    <option value="{{ vendor.id }}">{{ vendor.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Approve</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
-
+<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     $('#rejectModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var requestId = button.data('request-id');
-        var modal = $(this);
+        $(this).find('form').attr('action', '/reject_request/' + requestId + '/');
+    });
 
-        modal.find('#request_id').val(requestId);
-
-       
-        var formAction = '/reject_request/' + requestId + '/';
-        modal.find('form').attr('action', formAction);
+    $('#approveModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var requestId = button.data('request-id');
+        $(this).find('form').attr('action', '/approve_request/' + requestId + '/');
     });
 </script>
 {% endblock %}
-
 </body>
 </html>
