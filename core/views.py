@@ -1,8 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import ITEquipmentDetails, OfficeSupplyDetails, Department, ProcurementRequest
+from .models import ITEquipmentDetails, OfficeSupplyDetails, Department, ProcurementRequest, PurchaseOrder
 from django.http import JsonResponse
 from django.http import Http404
-# Create your views here.
+
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from .models import PurchaseOrder
+
 
 def home(request):
     departments = Department.objects.all()
@@ -129,7 +134,7 @@ def update_status(request, request_id):
 
 
 def finance_dashboard(request):
-    # include all requests in any of these statuses
+    
     procurement_requests = ProcurementRequest.objects.filter(
         status__in=[
             'Pending Finance Approval',
@@ -144,11 +149,49 @@ def finance_dashboard(request):
 
 
 
-def approve_request(request, id):
-    procurement = ProcurementRequest.objects.get(id=id)
-    procurement.status = 'Approved by Finance'
-    procurement.save()
-    return redirect('finance_dashboard')
+    return JsonResponse({'success': True, 'message': 'Status updated successfully'})
+    
+    return JsonResponse({'success': False, 'message': 'Failed to update status'})
+
+
+
+
+
+
+
+
+
+def approve_request(request, request_id):  
+    print('sssssssssssssssssssssssssss')
+    procurement_request = get_object_or_404(ProcurementRequest, id=request_id)
+
+    
+    print('heeeeeeeeeeeeeeeeeeeeeeeeeellllllllllllll')
+    procurement_request.status = 'Approved by Finance'
+    procurement_request.save()
+
+        
+    context = {
+        'request': procurement_request,
+        'total_cost': procurement_request.total_cost,
+    }
+    html = render_to_string('pdf_template.html', context)
+
+        
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="PO_{procurement_request.id}.pdf"'
+
+        
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+        
+    if pisa_status.err:
+        return HttpResponse('Error generating PDF', status=500)
+
+    return response  
+
+    
+    
 
 def reject_request(request):
     if request.method == 'POST':
@@ -156,45 +199,7 @@ def reject_request(request):
         reason = request.POST.get('rejection_reason')
         req = get_object_or_404(ProcurementRequest, id=req_id)
         req.status = 'Rejected by Finance'
-        # Optionally save the reason (if you have a rejection_reason field)
-        # req.rejection_reason = reason
+        
         req.save()
     return redirect('finance_dashboard')
 
-
-# def approve_requests(request, request_id):
-#     procurement_request = get_object_or_404(ProcurementRequest, id=request_id)
-    
-#     # Ensure that the request is in "Pending Finance Approval" status
-#     if procurement_request.status != 'Pending Finance Approval':
-#         return JsonResponse({'success': False, 'message': 'This request is not pending finance approval.'})
-    
-#     # Check if the procurement request total cost is within the department's budget
-#     if procurement_request.total_cost <= procurement_request.department.budget:
-#         # Approve the request and update its status
-#         procurement_request.status = 'Approved by Finance'
-#         procurement_request.save()
-        
-  
-#         vendor = Vendor.objects.first()  
-#         po = PurchaseOrder.objects.create(
-#             procurement_request=procurement_request,
-#             vendor=vendor,
-#             total_amount=procurement_request.total_cost
-#         )
-        
-       
-#         return JsonResponse({'success': True, 'message': 'Request approved and PO generated successfully.'})
-    
-#     else:
-      
-#         procurement_request.status = 'Rejected by Finance'
-#         procurement_request.save()
-
-        
-#         finance_approval, created = FinanceApproval.objects.get_or_create(procurement_request=procurement_request)
-#         finance_approval.status = 'Rejected'
-#         finance_approval.rejection_reason = 'Exceeded department budget.'
-#         finance_approval.save()
-
-#         return JsonResponse({'success': False, 'message': 'Request exceeds the department’s budget. It has been rejected.'})

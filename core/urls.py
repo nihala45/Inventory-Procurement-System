@@ -9,6 +9,9 @@ urlpatterns = [
     path('department_details/<int:dep_id>/', views.department_details, name='department_details'),
     path('update-status/<int:request_id>/', views.update_status, name='update_status'),
     path('finance_dashboard/', views.finance_dashboard, name='finance_dashboard'),
-    path('approve_request/<int:id>/', views.approve_request, name='approve_request'),
+   
+    path('approve_request/<int:request_id>/', views.approve_request, name='approve_request'),
+
+
     path('reject_request/<int:request_id>/', views.reject_request, name='reject_request'),
 ]

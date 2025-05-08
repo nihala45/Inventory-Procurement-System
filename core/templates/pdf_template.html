@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Order (PO)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            text-align: center;
+        }
+        .order-details {
+            margin-top: 20px;
+        }
+        .order-details td {
+            padding: 5px 10px;
+        }
+        .table {
+            width: 100%;
+            border: 1px solid #000;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Purchase Order (PO)</h1>
+    <p>PO Number: {{ request.id }}</p>
+    <p>Requester: {{ request.requester }}</p>
+</div>
+
+<div class="order-details">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Quantity</th>
+                <th>Total Cost</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ request.item_name }}</td>
+                <td>{{ request.category }}</td>
+                <td>{{ request.quantity }}</td>
+                <td>${{ request.total_cost|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <p><strong>Total Amount:</strong> ${{ request.total_cost|floatformat:2 }}</p>
+</div>
+
+</body>
+</html>

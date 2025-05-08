@@ -101,7 +101,7 @@ class ProcurementRequest(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        # requester is already a string, so just use it directly:
+        
         return f"{self.requester} - {self.category} - {self.status}"
 
     def get_equipment_name(self):
@@ -110,3 +110,16 @@ class ProcurementRequest(models.Model):
         elif self.category == 'Office Supplies' and self.office_supply:
             return self.office_supply.name
         return "No Equipment"
+    
+    
+class PurchaseOrder(models.Model):
+    request = models.ForeignKey(ProcurementRequest, on_delete=models.CASCADE)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    po_number = models.CharField(max_length=50)
+    total_cost = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=50, default="PO Generated")
+    issued_at = models.DateTimeField(auto_now_add=True)
+    fulfilled_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"PO Number: {self.po_number}"
