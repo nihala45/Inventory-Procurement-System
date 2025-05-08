@@ -75,7 +75,7 @@ def create_procurement(request):
 
         procurement_request.save()
 
-        # Add a success message
+       
         messages.success(request, 'Procurement request has been successfully created.')
 
         return redirect('home')
@@ -110,10 +110,10 @@ def update_status(request, request_id):
     procurement_request = get_object_or_404(ProcurementRequest, id=request_id)
 
     if request.method == 'POST':
-        # Debugging: Print budget and total cost to ensure the condition is correct
+        
         print(f"Budget: {procurement_request.department.budget}, Total Cost: {procurement_request.total_cost}")
 
-        # Check if the department's budget is greater than the procurement request's total cost
+       
         if procurement_request.department.budget > procurement_request.total_cost:
             new_status = request.POST.get('status')
             if new_status:
@@ -121,7 +121,7 @@ def update_status(request, request_id):
                 procurement_request.save()
                 return JsonResponse({'success': True, 'message': 'Status updated successfully'})
         else:
-            # Handle the case where the budget is not enough
+            
             return JsonResponse({'success': False, 'message': 'Insufficient budget to approve the request'})
 
     return JsonResponse({'success': False, 'message': 'Failed to update status'})
@@ -260,5 +260,14 @@ def update_request_status(request, r_id):
             purchase.status = new_status
             purchase.save()
 
-    return redirect('finance_dashboard') 
+           
+            if new_status == 'Fulfilled':
+                department = purchase.department
+                if department.budget >= purchase.total_cost:
+                    department.budget -= purchase.total_cost
+                    department.save()
+                else:
+                    print("Not enough budget!")
+
+    return redirect('finance_dashboard')
     

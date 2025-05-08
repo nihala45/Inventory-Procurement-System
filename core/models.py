@@ -22,7 +22,7 @@ class Vendor(models.Model):
 
 class FinanceUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)  # Link to department if needed
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)  
     is_approver = models.BooleanField(default=False)  
 
     def __str__(self):
@@ -82,6 +82,7 @@ class ProcurementRequest(models.Model):
             self.total_cost = int(self.quantity) * self.office_supply.cost_per_item
         else:
             self.total_cost = 0
+        print(f"Total Cost: {self.total_cost}")
         super().save(*args, **kwargs)
 
     def __str__(self):

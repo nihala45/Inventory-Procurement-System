@@ -28,15 +28,19 @@
                     <td>${{ r.total_cost|floatformat:2 }}</td>
                     <td>{{ r.status }}</td>
                     <td>
-                        <form action="{% url 'update_request_status' r.id %}" method="post">
-                            {% csrf_token %}
-                            <select name="status" class="form-control mb-2" required>
-                                <option value="">--Select--</option>
-                                <option value="Fulfilled">Fulfilled</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
-                            <button type="submit" class="btn btn-sm btn-primary">Update</button>
-                        </form>
+                        {% if r.status != "Fulfilled" and r.status != "Rejected" %}
+                            <form action="{% url 'update_request_status' r.id %}" method="post">
+                                {% csrf_token %}
+                                <select name="status" class="form-control mb-2" required>
+                                    <option value="">--Select--</option>
+                                    <option value="Fulfilled">Fulfilled</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                            </form>
+                        {% else %}
+                            <span class="text-muted">Status updated</span>
+                        {% endif %}
                     </td>
                 </tr>
             {% empty %}
@@ -46,7 +50,6 @@
             {% endfor %}
         </tbody>
     </table>
-
 </div>
 </body>
 </html>
