@@ -73,7 +73,8 @@ class ProcurementRequest(models.Model):
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending Department Approval')
     submitted_at = models.DateTimeField(auto_now_add=True)
 
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, null=True, blank=True)
+
     def save(self, *args, **kwargs):
         if self.category == 'IT Equipment' and self.it_equipment:
             self.total_cost = int(self.quantity) * self.it_equipment.cost_per_item
