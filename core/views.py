@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from .models import PurchaseOrder
 from django.utils import timezone
+from django.contrib import messages
 
 
 def home(request):
@@ -15,8 +16,6 @@ def home(request):
     context = {
         'departments': departments
     }
-    
-
     return render(request, 'form.html', context)
     
     
@@ -29,53 +28,37 @@ def get_products(request):
         products = list(ITEquipmentDetails.objects.all().values('id', 'name'))
     elif category == "Office Supply":
         products = list(OfficeSupplyDetails.objects.all().values('id', 'name'))
-
     return JsonResponse({'products': products})
+
 
 
 
 def create_procurement(request):
     if request.method == 'POST':
         requester_name = request.POST.get('requester_name')
-        print(requester_name, 'Hellooohhhhhhhhhhhhhhhhh')
-        
         department_id = request.POST.get('department')
-        print(department_id,'this the department')
         category = request.POST.get('category')
-        print(category,'category management simple',)
         quantity = request.POST.get('quantity')
-        print(quantity,'quantity management simple',)
-        
         description = request.POST.get('description')
-        print(description,'description management')
-        
         equipment_id = request.POST.get('equipment')
-        print(equipment_id,'this is the equiment id u got')
-
         
         department = Department.objects.get(id=department_id)
-        
+
         if category == 'IT Equipment':
             equipment = ITEquipmentDetails.objects.get(id=equipment_id)
-            print(equipment,'iiiiiiiiiiiiiiiiit equitmemt')
         elif category == 'Office Supply':
             equipment = OfficeSupplyDetails.objects.get(id=equipment_id)
-            print(equipment,'ooooooooooyou got this equipemnt')
         else:
             equipment = None
 
-       
         if equipment:
             if category == 'IT Equipment':
                 total_cost = int(quantity) * equipment.cost_per_item
-                print(total_cost,'iiiiiiiiiiiii')
             elif category == 'Office Supply':
                 total_cost = int(quantity) * equipment.cost_per_item
-                print(total_cost,'Ooooooooooooooooooo')
         else:
             total_cost = 0
 
-        
         procurement_request = ProcurementRequest(
             requester=requester_name,
             department=department,
@@ -92,9 +75,14 @@ def create_procurement(request):
 
         procurement_request.save()
 
+        # Add a success message
+        messages.success(request, 'Procurement request has been successfully created.')
+
         return redirect('home')
 
-    return render(request, 'create_procurement.html')
+    
+
+
 
 def view_departments(request):
     departments = Department.objects.all()
@@ -122,16 +110,21 @@ def update_status(request, request_id):
     procurement_request = get_object_or_404(ProcurementRequest, id=request_id)
 
     if request.method == 'POST':
+        # Debugging: Print budget and total cost to ensure the condition is correct
+        print(f"Budget: {procurement_request.department.budget}, Total Cost: {procurement_request.total_cost}")
+
+        # Check if the department's budget is greater than the procurement request's total cost
         if procurement_request.department.budget > procurement_request.total_cost:
             new_status = request.POST.get('status')
             if new_status:
                 procurement_request.status = new_status
                 procurement_request.save()
                 return JsonResponse({'success': True, 'message': 'Status updated successfully'})
-    
+        else:
+            # Handle the case where the budget is not enough
+            return JsonResponse({'success': False, 'message': 'Insufficient budget to approve the request'})
+
     return JsonResponse({'success': False, 'message': 'Failed to update status'})
-
-
 
 
 def finance_dashboard(request):
@@ -178,6 +171,7 @@ def approve_request(request, request_id):
     if request.method == 'POST':
         vendor_id = request.POST.get('vendor_id')
         vendor = get_object_or_404(Vendor, id=vendor_id)
+        print(vendor,'this ist he code details')
 
         procurement_request.status = 'Approved by Finance'
          
